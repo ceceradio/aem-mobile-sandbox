@@ -1,0 +1,22 @@
+{
+  "name": "aem-mobile-sandbox",
+  "version": "1.0.0",
+  "description": "Some hacky scripts to utilize AEM Mobile's API ",
+  "main": "copyLayouts.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/satsukitv/aem-mobile-sandbox.git"
+  },
+  "author": "Charlie Wagner @satsukitv",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/satsukitv/aem-mobile-sandbox/issues"
+  },
+  "homepage": "https://github.com/satsukitv/aem-mobile-sandbox#readme",
+  "dependencies": {
+    "aem-mobile-api": "0.0.14"
+  }
+}
