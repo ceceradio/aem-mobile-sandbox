@@ -1,0 +1,7 @@
+{
+  "publication_id": "SRC_PUBLICATION_ID",
+  "device_id": "DEVICE_ID",
+  "device_secret": "DEVICE_SECRET",
+  "client_id": "API_CLIENT_ID",
+  "client_secret": "API_CLIENT_SECRET"
+}
