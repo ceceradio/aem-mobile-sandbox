@@ -36,15 +36,18 @@ function copyAllLayouts() {
   return dpsUtils.publicationGet('layout').
   then(function(response) {
     data = response;
-    return data.reduce(function(promise, item) {
-      return promise.then(function(result) {
+    var promiseChain = q();
+    for (var i = 0; i < data.length; i++) {
+      var item = data[i];
+      promiseChain.then(function(result) {
         if (result) {
           results.push(result);
         }
         var entityName = getEntityNameFromHref(item.href);
         return copyLayout(entityName);
       })
-    }, q()).then(function(result) {
+    }
+    return promiseChain.then(function(result) {
       if (result) {
         results.push(result);
       }
@@ -100,15 +103,18 @@ function copyLayout(layoutId) {
 function copyCardTemplates(cardTemplates) {
   console.log("Copying Card Templates");
   var results = [];
-  return cardTemplates.reduce(function(promise, item) {
-    return promise.then(function(result) {
+  var promiseChain = q();
+  for (var i = 0; i < cardTemplates.length; i++) {
+    var item = cardTemplates[i];
+    promiseChain.then(function(result) {
       if (result) {
         results.push(result);
       }
       var currentTemplate = getEntityNameFromHref(item.href);
-      return copyCardTemplate(currentTemplate)
+      return copyCardTemplate(currentTemplate);
     })
-  }, q()).then(function(result) {
+  }
+  return promiseChain.then(function(result) {
     if (result) {
       results.push(result);
     }
