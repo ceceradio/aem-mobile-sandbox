@@ -1,4 +1,4 @@
-var AEMMobileAPI = require('./aem-mobile-api.js')
+var AEMMobileAPI = require('aem-mobile-api')
 var q = require('q')
 var _ = require('lodash')
 var options = require('./api.json')
@@ -37,19 +37,19 @@ function copyAllLayouts() {
   then(function(response) {
     data = response;
     var promiseChain = q();
-    for (var i = 0; i < data.length; i++) {
-      var item = data[i];
-      promiseChain.then(function(result) {
+    var count = data.length; // keep track of this since we're popping asynchronously
+    for (var i = 0; i < count; i++) {
+      promiseChain = promiseChain.then(function(result) {
         if (result) {
           results.push(result);
         }
-        var entityName = getEntityNameFromHref(item.href);
+        var entityName = getEntityNameFromHref(data.pop().href);
         return copyLayout(entityName);
       })
     }
-    return promiseChain.then(function(result) {
-      if (result) {
-        results.push(result);
+    return promiseChain.then(function(finalResult) {
+      if (finalResult) {
+        results.push(finalResult);
       }
       return results;
     });
@@ -104,19 +104,19 @@ function copyCardTemplates(cardTemplates) {
   console.log("Copying Card Templates");
   var results = [];
   var promiseChain = q();
-  for (var i = 0; i < cardTemplates.length; i++) {
-    var item = cardTemplates[i];
-    promiseChain.then(function(result) {
+  var count = cardTemplates.length; // keep track of this since we're popping asynchronously
+  for (var i = 0; i < count; i++) {
+    promiseChain = promiseChain.then(function(result) {
       if (result) {
         results.push(result);
       }
-      var currentTemplate = getEntityNameFromHref(item.href);
+      var currentTemplate = getEntityNameFromHref(cardTemplates.pop().href);
       return copyCardTemplate(currentTemplate);
     })
   }
-  return promiseChain.then(function(result) {
-    if (result) {
-      results.push(result);
+  return promiseChain.then(function(finalResult) {
+    if (finalResult) {
+      results.push(finalResult);
     }
     return results;
   })
