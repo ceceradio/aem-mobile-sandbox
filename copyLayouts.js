@@ -5,13 +5,17 @@ var options = require('./api.json')
 var src_publication_id = options.publication_id;
 var dest_publication_id = "DEST_PUBLICATION_ID"
 var dpsUtils = new AEMMobileAPI(options);
+var dpsUtils2 = new AEMMobileAPI(JSON.parse(JSON.stringify(options)));
+dpsUtils2.credentials.publication_id = dest_publication_id;
 var allCollections = [];
 if (typeof options.access_token === 'undefined') {
   dpsUtils.getAccessToken()
   .then(function(data) {
     dpsUtils.credentials.access_token = data.access_token;
-    var root = {};
-
+    return dpsUtils2.getAccessToken()
+  })
+  .then(function(data) {
+    dpsUtils2.credentials.access_token = data.access_token;
     return copyAllLayouts();
   })
   .then(function(ret) {
@@ -39,18 +43,16 @@ function copyAllLayouts() {
     var promiseChain = q();
     var count = data.length; // keep track of this since we're popping asynchronously
     for (var i = 0; i < count; i++) {
-      promiseChain = promiseChain.then(function(result) {
-        if (result) {
-          results.push(result);
-        }
+      promiseChain = promiseChain
+      .then(function() {
         var entityName = getEntityNameFromHref(data.pop().href);
         return copyLayout(entityName);
       })
+      .then(function(result) {
+        results.push(result);
+      })
     }
-    return promiseChain.then(function(finalResult) {
-      if (finalResult) {
-        results.push(finalResult);
-      }
+    return promiseChain.then(function() {
       return results;
     });
   });
@@ -58,14 +60,11 @@ function copyAllLayouts() {
 
 function copyLayout(layoutId) {
   console.log("Copy Layout: " + layoutId);
-  var copy;
-  var data;
   return dpsUtils.publicationGet('layout/'+layoutId)
   .then(function(templateData) {
-    data = templateData;
-    return copyCardTemplates(data._links.cardTemplates)
+    return [templateData, copyCardTemplates(templateData._links.cardTemplates)]
   })
-  .then(function(newCardTemplates) {
+  .spread(function(data, newCardTemplates) {
     copy = {
       cellAspectRatio: data.cellAspectRatio,
       useBackgroundImage: data.useBackgroundImage,
@@ -85,17 +84,15 @@ function copyLayout(layoutId) {
         cardTemplates: newCardTemplates
       }
     };
-    dpsUtils.credentials.publication_id = dest_publication_id;
-    return dpsUtils.publicationGet('layout/'+layoutId);
+    return [data, copy, dpsUtils2.publicationGet('layout/'+layoutId)];
   })
-  .then(function(resp) {
+  .spread(function(data, copy, resp) {
     if (typeof resp.code === "undefined") {
       copy = _.merge(resp, copy)
     }
-    return dpsUtils.putEntity(copy);
+    return dpsUtils2.putEntity(copy);
   })
   .then(function(data) {
-    dpsUtils.credentials.publication_id = src_publication_id;
     return { href: '/publication/'+dest_publication_id+'/layout/'+data.entityName+';version='+data.version };
   });
 }
@@ -106,25 +103,22 @@ function copyCardTemplates(cardTemplates) {
   var promiseChain = q();
   var count = cardTemplates.length; // keep track of this since we're popping asynchronously
   for (var i = 0; i < count; i++) {
-    promiseChain = promiseChain.then(function(result) {
-      if (result) {
+    promiseChain = promiseChain
+      .then(function() {
+        var currentTemplate = getEntityNameFromHref(cardTemplates.pop().href);
+        return copyCardTemplate(currentTemplate);
+      })
+      .then(function(result) {
         results.push(result);
-      }
-      var currentTemplate = getEntityNameFromHref(cardTemplates.pop().href);
-      return copyCardTemplate(currentTemplate);
-    })
+      })
   }
-  return promiseChain.then(function(finalResult) {
-    if (finalResult) {
-      results.push(finalResult);
-    }
+  return promiseChain.then(function() {
     return results;
   })
 }
 
 function copyCardTemplate(entityName) {
   console.log("Copying Card Template: "+entityName);
-  var copy;
   return dpsUtils.publicationGet('cardTemplate/'+entityName)
   .then(function(data) {
      copy = {
@@ -135,17 +129,15 @@ function copyCardTemplate(entityName) {
       entityName: data.entityName,
       entityType: data.entityType
     };
-    dpsUtils.credentials.publication_id = dest_publication_id;
-    return dpsUtils.publicationGet('cardTemplate/'+data.entityName);
+    return [copy, dpsUtils2.publicationGet('cardTemplate/'+data.entityName)];
   })
-  .then(function(resp) {
+  .spread(function(copy, resp) {
     if (typeof resp.code === "undefined") {
       copy = _.merge(resp, copy);
     }
-    return dpsUtils.putEntity(copy);
+    return dpsUtils2.putEntity(copy);
   })
   .then(function(data) {
-      dpsUtils.credentials.publication_id = src_publication_id;
       return { href: '/publication/'+dest_publication_id+'/cardTemplate/'+data.entityName+';version='+data.version };
   });
 }
