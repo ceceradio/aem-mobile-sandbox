@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/satsukitv/aem-mobile-sandbox#readme",
   "dependencies": {
-    "aem-mobile-api": "0.0.14"
+    "aem-mobile-api": "0.1.0"
   }
 }
